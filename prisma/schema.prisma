@@ -1,14 +1,67 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
-}
-
 datasource db {
   provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id          BigInt   @id @default(autoincrement())
+  email       String?  @db.VarChar(255)
+  nickname    String?  @db.VarChar(50)
+  password    String?  @db.VarChar(255)
+  createdAt   DateTime @default(now())
+
+  characters  Character[]
+  sessions    Session[]
+  experiments ExperimentAssignment[]
+}
+
+model Character {
+  id              BigInt    @id @default(autoincrement())
+  name            String?   @db.VarChar(50)
+  personality     String?   @db.Text
+  speakingStyle   String?   @db.Text
+  background      String?   @db.Text
+  exampleDialogues Json?
+  createdAt       DateTime  @default(now())
+
+  userId   BigInt
+  user     User      @relation(fields: [userId], references: [id])
+
+  sessions Session[]
+}
+
+model Session {
+  id        BigInt   @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  userId    BigInt
+  charId    BigInt
+
+  user      User      @relation(fields: [userId], references: [id])
+  character Character @relation(fields: [charId], references: [id])
+
+  messages  Message[]
+}
+
+model Message {
+  id        BigInt   @id @default(autoincrement())
+  role      String   @db.VarChar(20)
+  content   String
+  createdAt DateTime @default(now())
+
+  sessionId BigInt
+  session   Session @relation(fields: [sessionId], references: [id])
+}
+
+model ExperimentAssignment {
+  experimentKey String  @db.VarChar(100)
+  userId        BigInt
+  group         String? @db.VarChar(20)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@id([experimentKey, userId])
 }
